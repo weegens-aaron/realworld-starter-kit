@@ -4,3 +4,4 @@
 {"id":"int-9cf29506","kind":"field_change","created_at":"2026-06-08T04:36:04.7717192Z","actor":"clippy","issue_id":"conduit-fe-avatar","extra":{"field":"status","new_value":"closed","old_value":"in_progress","reason":"bead-chain: LLM judges passed"}}
 {"id":"int-d65d7972","kind":"field_change","created_at":"2026-06-08T04:43:29.6122887Z","actor":"clippy","issue_id":"conduit-fnd-scaffold","extra":{"field":"status","new_value":"closed","old_value":"in_progress","reason":"bead-chain: LLM judges passed"}}
 {"id":"int-0229a08d","kind":"field_change","created_at":"2026-06-08T05:36:59.6084269Z","actor":"clippy","issue_id":"conduit-fnd-jwt","extra":{"field":"status","new_value":"open","old_value":"in_progress"}}
+{"id":"int-a12235fc","kind":"field_change","created_at":"2026-06-08T06:02:23.1701476Z","actor":"clippy","issue_id":"conduit-ar3","extra":{"field":"status","new_value":"closed","old_value":"in_progress","reason":"bead-chain: LLM judges passed"}}
