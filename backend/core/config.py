@@ -35,6 +35,15 @@ class Settings(BaseSettings):
     static_dir: str = "frontend/static"
     templates_dir: str = "frontend/templates"
 
+    # --- JWT / auth knobs (read by backend.core.security) -----------------
+    # The signing secret MUST be overridden in any non-dev environment via
+    # CONDUIT_JWT_SECRET. The default is intentionally obvious so a leaked
+    # token from a misconfigured deploy is easy to spot.
+    jwt_secret: str = "dev-insecure-change-me-please-override-in-prod"
+    jwt_algorithm: str = "HS256"
+    # How long an issued access token stays valid, in minutes (default 7 days).
+    jwt_expires_minutes: int = 60 * 24 * 7
+
 
 @lru_cache
 def get_settings() -> Settings:
