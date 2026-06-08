@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from functools import lru_cache
 
+from pydantic import AliasChoices, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -29,6 +30,18 @@ class Settings(BaseSettings):
 
     app_name: str = "Conduit"
     debug: bool = False
+
+    # --- Database (read by backend.core.db) ------------------------------
+    # The SQLAlchemy connection URL. We honour the de-facto-standard bare
+    # ``DATABASE_URL`` (what Postgres hosts/Heroku/Fly/etc. inject) *and* the
+    # project's ``CONDUIT_`` prefix, so deploy platforms work out of the box
+    # without a rename. Whatever driver you pass is normalised to asyncpg in
+    # backend.core.db, so ``postgres://``, ``postgresql://`` and
+    # ``postgresql+asyncpg://`` all just work.
+    database_url: str = Field(
+        default="postgresql+asyncpg://postgres:postgres@localhost:5432/conduit",
+        validation_alias=AliasChoices("DATABASE_URL", "CONDUIT_DATABASE_URL"),
+    )
 
     # Where the static assets and templates live, relative to the repo root.
     # Kept here so the entrypoint and the templates env agree on one path.

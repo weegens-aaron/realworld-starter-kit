@@ -9,6 +9,8 @@ dependencies = [
     "fastapi>=0.115",
     "uvicorn[standard]>=0.30",
     "sqlalchemy>=2.0",
+    # Async Postgres driver for SQLAlchemy's async engine (postgresql+asyncpg).
+    "asyncpg>=0.29",
     "alembic>=1.13",
     "pyjwt>=2.9",
     # Hash passwords with the bcrypt library directly. We deliberately do NOT
@@ -26,6 +28,10 @@ dependencies = [
 dev = [
     "ruff>=0.6",
     "pytest>=8.3",
+    "pytest-asyncio>=0.23",
+    # In-memory async SQLite so the DB session dependency can be round-tripped
+    # in tests without standing up a real Postgres.
+    "aiosqlite>=0.20",
 ]
 
 [build-system]
@@ -61,3 +67,5 @@ known-first-party = ["backend", "frontend"]
 [tool.pytest.ini_options]
 testpaths = ["backend/tests", "frontend/tests"]
 addopts = "-q"
+# Let async test functions run without a per-test @pytest.mark.asyncio.
+asyncio_mode = "auto"

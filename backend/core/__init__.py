@@ -1,6 +1,14 @@
 """Cross-cutting concerns: configuration, security, shared dependencies."""
 
 from backend.core.config import Settings, get_settings
+from backend.core.db import (
+    Base,
+    DbSession,
+    async_session_factory,
+    create_engine,
+    engine,
+    get_db,
+)
 from backend.core.deps import (
     CurrentUser,
     OptionalUser,
@@ -29,6 +37,13 @@ from backend.core.security import (
 __all__ = [
     "Settings",
     "get_settings",
+    # database
+    "Base",
+    "DbSession",
+    "async_session_factory",
+    "create_engine",
+    "engine",
+    "get_db",
     # errors
     "APIError",
     "ConflictError",
