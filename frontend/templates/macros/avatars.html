@@ -1,0 +1,17 @@
+{#
+  Shared avatar macro (conduit-fe-avatar / ADR 0001).
+
+  Renders an <img> whose src falls back to default-avatar.svg when the
+  user/author `image` is null/empty. Reuse this one macro everywhere an
+  avatar appears so the fallback never drifts:
+    .user-img, .user-pic, .comment-author-img, .article-meta img
+
+  Usage:
+    {% from "macros/avatars.html" import avatar %}
+    {{ avatar(user.image, class="user-pic", alt=user.username) }}
+
+  Requires `register_avatar_helpers(env)` so the `avatar_src` filter exists.
+#}
+{% macro avatar(image, class="", alt="") -%}
+<img{% if class %} class="{{ class }}"{% endif %} src="{{ image | avatar_src }}" alt="{{ alt }}" />
+{%- endmacro %}

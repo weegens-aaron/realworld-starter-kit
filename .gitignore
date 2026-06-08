@@ -4,6 +4,13 @@
 /node_modules
 /dist
 
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.ruff_cache/
+.pytest_cache/
+
 # IDEs and editors
 /.idea
 .project
