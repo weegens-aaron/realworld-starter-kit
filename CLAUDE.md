@@ -53,18 +53,34 @@ bd close <id>         # Complete work
 
 ## Build & Test
 
-_Add your build and test commands here_
+Tooling is [uv](https://docs.astral.sh/uv/) (lockfile: `uv.lock`). Python 3.11+.
 
 ```bash
-# Example:
-# npm install
-# npm test
+uv sync --extra dev                          # create/refresh .venv
+uv run uvicorn backend.main:app --reload     # boot the app
+uv run ruff check --fix . && uv run ruff format .
+uv run pytest
 ```
+
+Frontend JS tests (vanilla, no bundler): `cd frontend && node --test`.
 
 ## Architecture Overview
 
-_Add a brief overview of your project architecture_
+A **single FastAPI application** serving both the JSON API and the HTML UI:
+
+- `backend/` — `api` (routers, mounted at `/api`), `models` (SQLAlchemy 2.0),
+  `services` (shared business logic), `core` (config/security). Entrypoint:
+  `backend/main.py` (`create_app()` factory + `app`).
+- `frontend/` — `templates` (Jinja2), `static` (vanilla JS, served at `/static`),
+  `routes` (server-rendered HTML).
+
+HTML routes call the service layer directly — no self-HTTP hop. See
+`docs/adr/0001` for the HTMX + JWT-in-localStorage rendering strategy.
 
 ## Conventions & Patterns
 
-_Add your project-specific conventions here_
+- DRY/YAGNI/SOLID; keep files under ~600 lines; obey the Zen of Python.
+- Config lives in `backend/core/config.py` (`get_settings()`); don't read
+  `os.environ` directly.
+- One router owns `/api`; one Jinja2 env (`frontend/templates_env.py`) owns
+  templating and registers the shared avatar helpers.
