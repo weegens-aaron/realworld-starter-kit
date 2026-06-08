@@ -8,6 +8,16 @@ from backend.core.deps import (
     get_current_user,
     get_optional_user,
 )
+from backend.core.errors import (
+    APIError,
+    ConflictError,
+    ForbiddenError,
+    GenericErrorModel,
+    NotFoundError,
+    UnauthorizedError,
+    UnprocessableEntityError,
+    register_exception_handlers,
+)
 from backend.core.security import (
     TokenError,
     create_access_token,
@@ -19,6 +29,15 @@ from backend.core.security import (
 __all__ = [
     "Settings",
     "get_settings",
+    # errors
+    "APIError",
+    "ConflictError",
+    "ForbiddenError",
+    "GenericErrorModel",
+    "NotFoundError",
+    "UnauthorizedError",
+    "UnprocessableEntityError",
+    "register_exception_handlers",
     # security
     "TokenError",
     "create_access_token",

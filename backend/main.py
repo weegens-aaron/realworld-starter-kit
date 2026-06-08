@@ -15,7 +15,7 @@ from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 
 from backend.api import api_router
-from backend.core import get_settings
+from backend.core import get_settings, register_exception_handlers
 from frontend.routes import html_router
 
 
@@ -28,6 +28,11 @@ def create_app() -> FastAPI:
     """
     settings = get_settings()
     app = FastAPI(title=settings.app_name, debug=settings.debug)
+
+    # Central error handling: every error comes back as RealWorld's
+    # GenericErrorModel ({"errors": {key: [msgs]}}) with the documented status
+    # codes. Wired before the routers so it blankets the whole app.
+    register_exception_handlers(app)
 
     # JSON API first — one router owns the whole /api surface.
     app.include_router(api_router, prefix="/api")
