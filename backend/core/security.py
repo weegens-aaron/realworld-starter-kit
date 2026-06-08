@@ -3,9 +3,9 @@
 This module is the single source of truth for the two cryptographic concerns
 the app has at the foundation layer:
 
-* **Passwords** — hashed with bcrypt via passlib's ``CryptContext`` so the
-  raw password never touches the database. ``hash_password`` / ``verify_password``
-  are the only blessed entry points.
+* **Passwords** — hashed with bcrypt (the ``bcrypt`` library directly, no
+  passlib wrapper) so the raw password never touches the database.
+  ``hash_password`` / ``verify_password`` are the only blessed entry points.
 * **JWTs** — symmetric (HS256) access tokens issued by ``create_access_token``
   and validated by ``decode_access_token`` (PyJWT under the hood). The token's
   subject (``sub``) carries the user id; ``username`` is included as a
@@ -22,14 +22,14 @@ from __future__ import annotations
 
 from datetime import UTC, datetime, timedelta
 
+import bcrypt
 import jwt
-from passlib.context import CryptContext
 
 from backend.core.config import get_settings
 
-# One context, bcrypt scheme. ``deprecated="auto"`` lets us rotate schemes
-# later (passlib will flag old hashes for re-hash) without breaking verify.
-_pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+# bcrypt only consumes the first 72 bytes of input; bcrypt>=4.1 *raises* on
+# longer input instead of silently truncating, so we truncate explicitly.
+_BCRYPT_MAX_BYTES = 72
 
 
 class TokenError(Exception):
@@ -43,13 +43,19 @@ class TokenError(Exception):
 # --------------------------------------------------------------------------- #
 # Passwords
 # --------------------------------------------------------------------------- #
-def hash_password(password: str) -> str:
-    """Return a salted bcrypt hash of ``password``.
+def _prepare(password: str) -> bytes:
+    """Encode and truncate ``password`` to bcrypt's 72-byte input window.
 
-    bcrypt silently truncates input beyond 72 bytes; callers should enforce a
-    sane max length at the API boundary rather than relying on that quirk.
+    Truncation matches bcrypt's own internal behaviour, so this only changes
+    *when* the cut happens (here, explicitly) not *what* gets hashed. Callers
+    should still enforce a sane max length at the API boundary.
     """
-    return _pwd_context.hash(password)
+    return password.encode("utf-8")[:_BCRYPT_MAX_BYTES]
+
+
+def hash_password(password: str) -> str:
+    """Return a salted bcrypt hash of ``password`` as an ASCII string."""
+    return bcrypt.hashpw(_prepare(password), bcrypt.gensalt()).decode("ascii")
 
 
 def verify_password(password: str, hashed: str) -> bool:
@@ -59,8 +65,8 @@ def verify_password(password: str, hashed: str) -> bool:
     callers can treat "wrong password" and "garbage in the column" identically.
     """
     try:
-        return _pwd_context.verify(password, hashed)
-    except ValueError:
+        return bcrypt.checkpw(_prepare(password), hashed.encode("ascii"))
+    except (ValueError, TypeError):
         return False
 
 

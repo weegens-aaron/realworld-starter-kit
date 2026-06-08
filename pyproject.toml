@@ -11,12 +11,11 @@ dependencies = [
     "sqlalchemy>=2.0",
     "alembic>=1.13",
     "pyjwt>=2.9",
-    "passlib[bcrypt]>=1.7",
-    # Pin bcrypt below 4.1: passlib 1.7.4 (unmaintained) reads the removed
-    # bcrypt.__about__.__version__ and its backend-init probe hashes a >72-byte
-    # secret that bcrypt>=4.1 rejects, crashing every hash() call. See
-    # conduit-ar3 for the proper (de-passlib) follow-up.
-    "bcrypt>=4.0,<4.1",
+    # Hash passwords with the bcrypt library directly. We deliberately do NOT
+    # use passlib: 1.7.4 (last release 2020) is unmaintained and crashes on
+    # bcrypt>=4.1, which would force us to freeze bcrypt on an old, unpatched
+    # line. Using bcrypt directly lets us track current releases. (conduit-ar3)
+    "bcrypt>=4.1",
     "jinja2>=3.1",
     "httpx>=0.27",
     "python-multipart>=0.0.9",

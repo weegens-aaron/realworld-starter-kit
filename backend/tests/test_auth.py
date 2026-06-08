@@ -42,6 +42,18 @@ def test_hash_is_salted_unique() -> None:
     assert hash_password("same") != hash_password("same")
 
 
+def test_long_password_does_not_crash() -> None:
+    # Regression for conduit-ar3: bcrypt>=4.1 raises on >72-byte input unless
+    # we truncate first. Hashing/verifying a long password must just work.
+    long_pw = "a" * 200
+    hashed = hash_password(long_pw)
+    assert verify_password(long_pw, hashed) is True
+    # And the first-72-bytes contract holds: a value sharing that prefix
+    # verifies, a divergence within the first 72 bytes does not.
+    assert verify_password("a" * 72, hashed) is True
+    assert verify_password("b" + "a" * 199, hashed) is False
+
+
 # --------------------------------------------------------------------------- #
 # JWT issue / verify
 # --------------------------------------------------------------------------- #
