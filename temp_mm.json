@@ -1,0 +1,4 @@
+{
+  "conduit-fnd-models-done": "conduit-fnd-models DONE: ORM lives in backend/models/ split per-entity (user.py=User+Follow, article.py=Article+Tag+article_tags+Favorite, comment.py=Comment, mixins.py=TimestampMixin). from backend.models import Base,User,Follow,Article,Tag,article_tags,Comment,Favorite -- importing the package is what REGISTERS all tables on Base.metadata (needed for Alembic autogenerate/create_all). Tags M2M via plain article_tags Table (no extra cols). Follow+Favorite are composite-PK association OBJECTS w/ ondelete=CASCADE+UNIQUE pair. Article.favorites_count is a DEFERRED column_property (correlated scalar subquery) -- select it explicitly, drives favoritesCount in SQL not Python len(). User.following/followers ride 'follows' secondary (self-ref, two FKs). GOTCHA: with expire_on_commit=False a relationship's order_by (Tag.name) won't reorder an already-in-memory collection post-commit; expire_all() to re-query.",
+  "schema_version": 1
+}
