@@ -39,6 +39,10 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
+# API test harness (Hurl) artifacts
+/hurl-report/
+uvicorn.log
+
 # Beads / Dolt files (added by bd init)
 .dolt/
 *.db

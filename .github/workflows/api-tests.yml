@@ -1,0 +1,87 @@
+name: API Tests (Hurl)
+
+# Boots Postgres + the FastAPI app, then runs the Hurl integration suite
+# against the live backend. This is the harness the resource verify-tasks
+# invoke. It MAY be red until the API endpoints land — that's expected;
+# the health check is the only route guaranteed green on the scaffold.
+
+on:
+  push:
+    branches: [master, main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  hurl:
+    runs-on: ubuntu-latest
+
+    # Real Postgres so the app exercises asyncpg, not a SQLite stand-in.
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: conduit
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      # Bare DATABASE_URL is honoured by backend/core/config.py (it accepts
+      # both DATABASE_URL and CONDUIT_DATABASE_URL). The driver is normalised
+      # to asyncpg in backend/core/db.py.
+      DATABASE_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/conduit
+      HOST: http://localhost:8000/api
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Set up Python
+        run: uv python install 3.11
+
+      - name: Install dependencies
+        run: uv sync --extra dev
+
+      - name: Install Hurl
+        run: |
+          HURL_VERSION=5.0.1
+          curl --silent --location --remote-name \
+            "https://github.com/Orange-OpenSource/hurl/releases/download/${HURL_VERSION}/hurl_${HURL_VERSION}_amd64.deb"
+          sudo apt-get update
+          sudo apt-get install -y "./hurl_${HURL_VERSION}_amd64.deb"
+          hurl --version
+
+      - name: Boot the app
+        run: |
+          uv run uvicorn backend.main:app --host 0.0.0.0 --port 8000 \
+            > uvicorn.log 2>&1 &
+          echo "APP_PID=$!" >> "$GITHUB_ENV"
+
+      - name: Run Hurl API suite
+        run: |
+          chmod +x specs/api/run-api-tests-hurl.sh
+          HURL_REPORT_DIR="$PWD/hurl-report" \
+            specs/api/run-api-tests-hurl.sh
+
+      - name: Dump app log on failure
+        if: failure()
+        run: cat uvicorn.log || true
+
+      - name: Upload Hurl report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: hurl-report
+          path: hurl-report
+          if-no-files-found: ignore
