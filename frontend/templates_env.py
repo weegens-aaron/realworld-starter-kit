@@ -26,4 +26,8 @@ def get_templates() -> Jinja2Templates:
     settings = get_settings()
     templates = Jinja2Templates(directory=settings.templates_dir)
     register_avatar_helpers(templates.env)
+    # ``app_name`` is a process-wide constant (settings), so it belongs as a
+    # Jinja2 global next to DEFAULT_AVATAR_URL rather than being threaded
+    # through every route's render context -- DRY, one obvious place.
+    templates.env.globals["app_name"] = settings.app_name
     return templates

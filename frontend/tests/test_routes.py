@@ -122,3 +122,19 @@ def test_protected_routes_have_login_guard(path: str) -> None:
 @pytest.mark.parametrize("path", ["/", "/login", "/register", "/profile/jane", "/article/x"])
 def test_public_routes_have_no_guard(path: str) -> None:
     assert "window.location.replace('/login')" not in _html(path)
+
+
+# --- Page title renders app_name (regression: phantom Jinja2 global) --------
+
+
+def test_title_includes_app_name() -> None:
+    """`page.html` references {{ app_name }}; guard it is actually supplied.
+
+    Regression for the phantom-global bug where the title rendered as
+    ``Home — `` (empty) because ``app_name`` was never in the template
+    context. It now lives as a Jinja2 global in ``templates_env``.
+    """
+    from backend.core import get_settings
+
+    app_name = get_settings().app_name
+    assert f"<title>Home — {app_name}</title>" in _html("/")
