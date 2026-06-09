@@ -1,0 +1,16 @@
+{#
+  Footer (conduit-fe-layout).
+
+  Standard RealWorld footer: brand .logo-font link back home + the attribution
+  line. Lives in its own partial so the shell stays DRY and every page bead gets
+  the same chrome for free.
+#}
+<footer>
+  <div class="container">
+    <a href="/" class="logo-font">{{ app_name | lower }}</a>
+    <span class="attribution">
+      An interactive learning project from
+      <a href="https://thinkster.io">Thinkster</a>. Code &amp; design licensed under MIT.
+    </span>
+  </div>
+</footer>

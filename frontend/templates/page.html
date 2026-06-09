@@ -1,8 +1,16 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+{#
+  Shared route scaffold (conduit-fe-routing) on top of the base layout
+  (conduit-fe-layout).
+
+  This template only proves that every SELECTORS route resolves to its page and
+  that deep links / query params are parsed: it sets the route-root class
+  (.home-page / .auth-page / ...) and surfaces deep-link state as data-*
+  attributes. The per-page beads override the `body` block with the real
+  RealWorld markup; the navbar/.container/footer chrome comes from base.html.
+#}
+{% extends "base.html" %}
+
+{% block head_guard %}
   {% if protected %}
   {#
     Pre-paint route guard (ADR 0001, Decision (c)): the JWT is client-only, so
@@ -16,15 +24,12 @@
     }
   </script>
   {% endif %}
-  <title>{{ page_title }} — {{ app_name }}</title>
-</head>
-<body data-page="{{ page }}">
+{% endblock %}
+
+{% block body %}
   {#
-    Scaffold shell. This bead (conduit-fe-routing) only proves that every
-    SELECTORS route resolves to its page and that deep links / query params
-    are parsed. The per-page beads replace this body with the real RealWorld
-    markup; the route-root class + data-* attributes below are what the e2e
-    url-navigation expectations key off.
+    Route-root class + data-* attributes are what the e2e url-navigation
+    expectations key off. The real page UI lands in each page's own bead.
   #}
   <div class="{{ page_class }}"
     {%- for key, value in params.items() %} data-{{ key }}="{{ value }}"{% endfor %}>
@@ -33,5 +38,4 @@
       <p>Conduit — the {{ page_title }} route is wired. Real UI lands in its page bead.</p>
     </main>
   </div>
-</body>
-</html>
+{% endblock %}

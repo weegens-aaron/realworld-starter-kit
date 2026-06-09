@@ -1,0 +1,53 @@
+{#
+  Base layout (conduit-fe-layout).
+
+  The shared page *shell* every server-rendered route extends: <head> (theme +
+  fonts/icons), the conditional navbar, the .container body slot, and the
+  footer. Per ADR 0001 the server renders the shell + public content only; the
+  navbar's auth state is hydrated client-side (the JWT is localStorage-only and
+  the server can't see it on a cold load).
+
+  Blocks page templates override:
+    head_guard   pre-paint <head> script (protected-route /login bounce)
+    title        the <title> (defaults to "<page_title> — <app_name>")
+    head_extra   per-page <head> additions
+    body         the route-root content (.home-page / .auth-page / ...)
+    scripts      per-page <script> tags (run after the foundation bundle)
+#}<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  {#
+    Pre-paint route guard slot. Must stay ABOVE <title> so it is parser-blocking
+    and runs before any content paints (ADR 0001, Decision (c)). Public pages
+    leave it empty; protected pages override it with the /login bounce.
+  #}
+  {% block head_guard %}{% endblock %}
+  <title>{% block title %}{{ page_title }} — {{ app_name }}{% endblock %}</title>
+  <link rel="icon" href="/favicon.ico" />
+  {# Conduit theme: typography + icons + the shared stylesheet. #}
+  <link
+    href="//fonts.googleapis.com/css?family=Titillium+Web:700|Source+Serif+Pro:400,700|Merriweather+Sans:400,700|Source+Sans+Pro:400,300,600,700,300italic,400italic,600italic,700italic"
+    rel="stylesheet" />
+  <link href="//code.ionicframework.com/ionicons/2.0.1/css/ionicons.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="/static/css/styles.css" />
+  {% block head_extra %}{% endblock %}
+</head>
+<body data-page="{{ page }}">
+  {% include "partials/navbar.html" %}
+
+  {% block body %}{% endblock %}
+
+  {% include "partials/footer.html" %}
+
+  {#
+    Foundation client bundle (vanilla, no bundler — ADR 0001, Decision (d)):
+      auth.js    owns the jwtToken I/O + the window.__conduit_debug__ contract
+      navbar.js  flips the navbar to its signed-in state once a token is known
+  #}
+  <script src="/static/js/auth.js"></script>
+  <script src="/static/js/navbar.js"></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

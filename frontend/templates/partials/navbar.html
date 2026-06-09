@@ -1,0 +1,53 @@
+{#
+  Top navigation (conduit-fe-layout).
+
+  RealWorld shell markup: .navbar > .container > .navbar-brand + .nav-link list.
+  The contract classes (.navbar, .navbar-brand, .nav-link, .container, .user-pic)
+  are what navigation.spec / the SELECTORS contract key off.
+
+  Auth is client-owned (ADR 0001): the server cannot see the localStorage JWT on
+  a cold load, so we render BOTH states and let navbar.js flip them:
+    [data-auth="anon"]  visible by default, hidden once a token is present
+    [data-auth="user"]  hidden by default (`hidden`), shown once a token exists
+  The signed-out markup is the server default so the common anonymous case has
+  no flash; authed users see a brief hydrate flip (the ADR 0001 "loading"
+  window). navbar.js also fills the profile link's href + username + avatar.
+#}
+{% from "macros/avatars.html" import avatar %}
+<nav class="navbar navbar-light">
+  <div class="container">
+    <a class="navbar-brand" href="/">{{ app_name | lower }}</a>
+    <ul class="nav navbar-nav pull-xs-right">
+      {# Home is shown in both auth states. #}
+      <li class="nav-item">
+        <a class="nav-link{% if page == 'home' %} active{% endif %}" href="/">Home</a>
+      </li>
+
+      {# --- Anonymous-only --------------------------------------------- #}
+      <li class="nav-item" data-auth="anon">
+        <a class="nav-link{% if page == 'login' %} active{% endif %}" href="/login">Sign in</a>
+      </li>
+      <li class="nav-item" data-auth="anon">
+        <a class="nav-link{% if page == 'register' %} active{% endif %}" href="/register">Sign up</a>
+      </li>
+
+      {# --- Authenticated-only (hidden until navbar.js sees a token) ---- #}
+      <li class="nav-item" data-auth="user" hidden>
+        <a class="nav-link{% if page == 'editor' %} active{% endif %}" href="/editor">
+          <i class="ion-compose"></i>&nbsp;New Article
+        </a>
+      </li>
+      <li class="nav-item" data-auth="user" hidden>
+        <a class="nav-link{% if page == 'settings' %} active{% endif %}" href="/settings">
+          <i class="ion-gear-a"></i>&nbsp;Settings
+        </a>
+      </li>
+      <li class="nav-item" data-auth="user" hidden>
+        <a class="nav-link" href="/profile/" data-nav="profile">
+          {{ avatar(none, class="user-pic", alt="") }}
+          <span data-nav="username"></span>
+        </a>
+      </li>
+    </ul>
+  </div>
+</nav>
