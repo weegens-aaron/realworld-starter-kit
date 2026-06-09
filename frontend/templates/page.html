@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  {% if protected %}
+  {#
+    Pre-paint route guard (ADR 0001, Decision (c)): the JWT is client-only, so
+    the server can't redirect unauthenticated viewers. This parser-blocking
+    <head> script bounces them to /login BEFORE any protected content paints
+    (no flash-of-protected-content). location.replace keeps history clean.
+  #}
+  <script>
+    if (!localStorage.getItem('jwtToken')) {
+      window.location.replace('/login');
+    }
+  </script>
+  {% endif %}
+  <title>{{ page_title }} — {{ app_name }}</title>
+</head>
+<body data-page="{{ page }}">
+  {#
+    Scaffold shell. This bead (conduit-fe-routing) only proves that every
+    SELECTORS route resolves to its page and that deep links / query params
+    are parsed. The per-page beads replace this body with the real RealWorld
+    markup; the route-root class + data-* attributes below are what the e2e
+    url-navigation expectations key off.
+  #}
+  <div class="{{ page_class }}"
+    {%- for key, value in params.items() %} data-{{ key }}="{{ value }}"{% endfor %}>
+    <main class="container">
+      <h1>{{ page_title }}</h1>
+      <p>Conduit — the {{ page_title }} route is wired. Real UI lands in its page bead.</p>
+    </main>
+  </div>
+</body>
+</html>
