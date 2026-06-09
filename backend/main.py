@@ -12,6 +12,7 @@ Boot with ``uvicorn backend.main:app``.
 from __future__ import annotations
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from backend.api import api_router
@@ -28,6 +29,20 @@ def create_app() -> FastAPI:
     """
     settings = get_settings()
     app = FastAPI(title=settings.app_name, debug=settings.debug)
+
+    # CORS: the e2e/demo frontends call this API cross-origin, so we opt every
+    # such request (and its OPTIONS preflight, which Starlette short-circuits
+    # here before any route handler) through CORS. Defaults are deliberately
+    # permissive because auth is header-based, not cookie-based — see
+    # docs/backend/cors.md. Lock down via CONDUIT_CORS_ORIGINS in prod.
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=settings.cors_origins,
+        allow_credentials=settings.cors_allow_credentials,
+        allow_methods=["*"],
+        allow_headers=["*"],
+        expose_headers=["*"],
+    )
 
     # Central error handling: every error comes back as RealWorld's
     # GenericErrorModel ({"errors": {key: [msgs]}}) with the documented status

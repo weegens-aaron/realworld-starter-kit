@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from functools import lru_cache
 
-from pydantic import AliasChoices, Field
+from pydantic import AliasChoices, Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -56,6 +56,31 @@ class Settings(BaseSettings):
     jwt_algorithm: str = "HS256"
     # How long an issued access token stays valid, in minutes (default 7 days).
     jwt_expires_minutes: int = 60 * 24 * 7
+
+    # --- CORS (read by backend.main.create_app) --------------------------
+    # The browser frontends (e2e suite + demo SPA) hit this API from a
+    # *different* origin, so cross-origin requests (and their OPTIONS preflight)
+    # must be opted in via CORS or the browser blocks them. Auth is header-based
+    # ("Authorization: Token <jwt>" out of localStorage), NOT cookie-based, so we
+    # don't need credentialed CORS — which lets us keep the maximally permissive
+    # "*" default. See docs/backend/cors.md. Override CONDUIT_CORS_ORIGINS
+    # (comma-separated) to lock it down in prod.
+    cors_origins: list[str] = Field(default_factory=lambda: ["*"])
+    cors_allow_credentials: bool = False
+
+    @field_validator("cors_origins", mode="before")
+    @classmethod
+    def _split_origins(cls, value: object) -> object:
+        """Accept a comma-separated string *or* a real list from the env.
+
+        pydantic-settings would otherwise demand JSON for a ``list`` field,
+        which is a hostile UX for an env var. A bare ``"a.com,b.com"`` is what
+        operators actually type, so we split it ourselves; anything else (an
+        already-parsed list, the default) passes straight through.
+        """
+        if isinstance(value, str):
+            return [origin.strip() for origin in value.split(",") if origin.strip()]
+        return value
 
 
 @lru_cache
