@@ -1,0 +1,49 @@
+# Conduit local development stack.
+#
+# One service: a PostgreSQL instance that the FastAPI app (run on the host via
+# uvicorn) talks to. We deliberately do NOT containerise the app itself for the
+# dev loop — `uv run uvicorn ... --reload` on the host gives the fastest
+# edit/save/refresh cycle, while Postgres is the one piece you don't want to
+# install and babysit by hand.
+#
+# Usage:
+#   docker compose up -d            # start Postgres in the background
+#   docker compose down             # stop it (data survives in the volume)
+#   docker compose down -v          # stop it AND wipe the data volume
+#
+# The credentials/DB name below MUST line up with DATABASE_URL in your .env
+# (and with the app's default in backend/core/config.py). Override any of them
+# from .env — Compose interpolates ${VAR:-default} the same way a shell does.
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: conduit-postgres
+    restart: unless-stopped
+    environment:
+      # These feed the official postgres image's first-boot init. Keep them in
+      # sync with DATABASE_URL. Defaults match config.py so a bare `up` + the
+      # app's defaults Just Work with zero .env edits.
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-conduit}
+    ports:
+      # host:container — expose Postgres on the host so host-side uvicorn (and
+      # psql/`alembic`) can reach it at localhost:5432.
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      # Named volume = your data persists across `down`/`up`. Nuke it with
+      # `docker compose down -v` when you want a truly clean slate.
+      - conduit-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      # `pg_isready` flips the container to healthy only once Postgres is
+      # actually accepting connections — the dev runner waits on this so it
+      # never fires migrations at a server that isn't listening yet.
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-conduit}"]
+      interval: 3s
+      timeout: 5s
+      retries: 10
+      start_period: 5s
+
+volumes:
+  conduit-pgdata:

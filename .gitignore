@@ -33,6 +33,10 @@ __pycache__/
 .DS_Store
 Thumbs.db
 
+# Local environment overrides (commit .env.example, never .env)
+.env
+.env.local
+
 
 #log files
 npm-debug.log*
